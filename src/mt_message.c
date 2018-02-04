@@ -1,11 +1,18 @@
 #include "mt_message.h"
 #include <math.h>
 
+// Depends on https://github.com/JMarple/liblogger_pros
+#include "logger.h"
+
 int getMTMessage(struct MTMessage* msg, FILE* usart)
 {
   // Defensive checks
-  if (msg == 0) return 1;
-  if (usart == 0) return 1;
+  if (msg == 0 || usart == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive Check Failed");
+    return 1;
+  }
 
   uint8_t checksum = 0;
 
@@ -42,8 +49,12 @@ int getMTMessage(struct MTMessage* msg, FILE* usart)
 int sendMTMessage(struct MTMessage* msg, FILE* usart)
 {
   // Defensive checks
-  if (msg == 0) return 1;
-  if (usart == 0) return 1;
+  if (msg == 0 || usart == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return 1;
+  }
 
   uint8_t checksum = 0xFF;
 
@@ -71,6 +82,9 @@ int sendMTMessage(struct MTMessage* msg, FILE* usart)
   // Checksum
   fputc((0x00 - checksum), usart);
 
+  logger_debug(logger_get_global_log(),
+    "Sent MT message with MID %x\n", msg->mid);
+
   return 0;
 }
 
@@ -78,7 +92,12 @@ int sendMTMessage(struct MTMessage* msg, FILE* usart)
 static void _simple_req_message(FILE* usart, unsigned int mid)
 {
   // Defensive check
-  if (usart == 0) return;
+  if (usart == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return;
+  }
 
   struct MTMessage msg;
   msg.mid = mid;
@@ -100,7 +119,12 @@ void mtReqErrorMode(FILE* usart){ _simple_req_message(usart, 0xDA); }
 void mtSetBaudrate(FILE* usart, enum MTBaudrate baudrate)
 {
   // Defensive check
-  if (usart == 0) return;
+  if (usart == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return;
+  }
 
   struct MTMessage msg;
   msg.mid = 0x18;
@@ -112,7 +136,12 @@ void mtSetBaudrate(FILE* usart, enum MTBaudrate baudrate)
 void mtSetErrorMode(FILE* usart, unsigned int errormode)
 {
   // Defensive check
-  if (usart == 0) return;
+  if (usart == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return;
+  }
 
   struct MTMessage msg;
   msg.mid = 0xDA;
@@ -124,6 +153,13 @@ void mtSetErrorMode(FILE* usart, unsigned int errormode)
 
 int isMTData2(struct MTMessage* msg)
 {
+  if (msg == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return 0;
+  }
+
   return (msg->mid == 0x36);
 }
 
@@ -163,6 +199,13 @@ static void _getUInt32FromBytes(uint32_t* output, uint8_t* data, int len)
 
 void parseMTData2(struct MTMessage* msg, struct MTData2* data)
 {
+  if (msg == 0 || data == 0)
+  {
+    struct Logger* log = logger_get_global_log();
+    logger_critical(log, "Defensive check failed!\n");
+    return;
+  }
+
   mutexTake(data->mutex, -1);
 
   for (int i = 0; i < msg->len;)
@@ -170,6 +213,9 @@ void parseMTData2(struct MTMessage* msg, struct MTData2* data)
     // Get data code
     int code = (msg->data[i] << 8) | msg->data[i+1];
     i+=2;
+
+    logger_debug(logger_get_global_log(),
+      "Parsing MTData2 with code %x\n", code);
 
     // Get length
     int len = msg->data[i];
@@ -192,7 +238,11 @@ void parseMTData2(struct MTMessage* msg, struct MTData2* data)
       _getUInt32FromBytes(&data->XDI_StatusWord, &msg->data[i], len);
     else if (code == XDI_ACCELERATION)
       _getDoubleFromBytes(data->XDI_Acceleration, &msg->data[i], len);
-
+    else
+    {
+      struct Logger* log = logger_get_global_log();
+      logger_warning(log, "Code %x is not accounted for", code);
+    }
     i+=len;
   }
 

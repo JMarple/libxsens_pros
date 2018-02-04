@@ -1,8 +1,20 @@
+// mt_message.h
+//
+// Author: Justin Marple, Team BNS
+// Contact: justinjmarple@gmail.com
+// Date: 2/4/2018
+//
+// The mt_message portion of the Xsens library contains code for sending,
+// receiving and parsing data from the MTi IMU.
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 #ifndef __MT_MESSAGE_H__
 #define __MT_MESSAGE_H__
 
 #include "API.h"
-
 #include <stdint.h>
 
 // A MTMessage is structured as follows:

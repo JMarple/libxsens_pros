@@ -2,7 +2,7 @@ LIBNAME=libxsens
 VERSION=1.0.0
 
 # extra files (like header files)
-TEMPLATEFILES = include/xsens.h include/mt_message
+TEMPLATEFILES = include/xsens.h include/mt_message.h
 # basename of the source files that should be archived
 TEMPLATEOBJS = xsens mt_message
 

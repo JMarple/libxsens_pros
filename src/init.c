@@ -40,20 +40,26 @@ void initializeIO() {
  * will not start. An autonomous mode selection menu like the pre_auton() in other environments
  * can be implemented in this task if desired.
  */
- 
-struct XsensVex xsens;
-
 void initialize() {
 
+  struct XsensVex xsens;
+
   xsens_init(&xsens, uart1, 38400);
+
+  // Allows all info-level xsens and MTMessage messages to be seen
+  // Comment out these two lines if you want default logging levels
+  logger_set_level(&xsens.log, LOGLEVEL_INFO);
+  logger_set_level(logger_get_global_log(), LOGLEVEL_INFO);
+
   xsens_start_task(&xsens);
 
-  printf("Calibrating...\n");
+  // Robot must be perfectly still while calibrating!
   xsens_calibrate(&xsens, 100);
 
   while (true)
   {
-    printf("Yaw = %f\n", xsens.heading_yaw);
+    printf("Angle = %f %f %f\n",
+      xsens_get_pitch(&xsens), xsens_get_roll(&xsens), xsens_get_yaw(&xsens));
     delay(50);
   }
 }
